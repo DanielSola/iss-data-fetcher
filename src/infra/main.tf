@@ -19,6 +19,10 @@ resource "aws_instance" "iss_data_fetcher" {
 
   key_name        = aws_key_pair.iss_data_fetcher_key.key_name  # Use the created key pair
   security_groups = ["default"]  # Adjust security groups as needed
+
+  lifecycle {
+    create_before_destroy = true  # Ensures the old instance is destroyed before creating a new one
+  }
 }
 
 output "instance_ip" {

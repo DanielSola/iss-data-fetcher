@@ -2,9 +2,11 @@ provider "aws" {
   region = "eu-west-1"  # Change to your preferred AWS region
 }
 
-resource "aws_key_pair" "iss-data-fetcher-key" {
-  key_name   = "my-websocket-key"  # Name of the key pair
-  public_key = file("~/.ssh/iss-data-fetcher.pub")  # Path to your public key
+variable "ssh_public_key" {}
+
+resource "aws_key_pair" "iss_data_fetcher_key" {
+  key_name   = "iss_data_fetcher_key"  # Name of the key pair
+  public_key = var.ssh_public_key
 }
 
 resource "aws_instance" "iss_data_fetcher" {
@@ -15,8 +17,8 @@ resource "aws_instance" "iss_data_fetcher" {
     Name = "iss-data-fetcher"
   }
 
-  key_name        = "your-ssh-key"  # Replace with your EC2 key pair
-  security_groups = ["default"]     # Adjust security groups as needed
+  key_name        = aws_key_pair.iss_data_fetcher_key.key_name  # Use the created key pair
+  security_groups = ["default"]  # Adjust security groups as needed
 }
 
 output "instance_ip" {

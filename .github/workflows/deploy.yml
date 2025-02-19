@@ -38,8 +38,12 @@ jobs:
       - name: Terraform Plan
         run: terraform plan
         working-directory: ./src/infra
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
 
       # Apply Terraform Configuration
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: ./src/infra
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}

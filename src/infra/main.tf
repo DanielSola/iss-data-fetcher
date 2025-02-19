@@ -10,7 +10,7 @@ resource "aws_key_pair" "iss_data_fetcher_key" {
 }
 
 resource "aws_instance" "iss_data_fetcher" {
-  ami           = "ami-0c55b159cbfafe1f0"  # Replace with a valid AMI ID
+  ami           = "ami-0e063207e92b63437"
   instance_type = "t3.nano"
 
   tags = {

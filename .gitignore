@@ -17,3 +17,6 @@ yarn-error.log*
 # IDE files
 .vscode/
 .idea/
+
+.terraform
+.terraform.lock.hcl

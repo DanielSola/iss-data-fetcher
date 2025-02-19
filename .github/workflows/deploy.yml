@@ -32,11 +32,14 @@ jobs:
       # Initialize Terraform
       - name: Terraform Init
         run: terraform init
+        working-directory: ./src/infra
 
       # Run Terraform Plan
       - name: Terraform Plan
         run: terraform plan
+        working-directory: ./src/infra
 
       # Apply Terraform Configuration
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        working-directory: ./src/infra

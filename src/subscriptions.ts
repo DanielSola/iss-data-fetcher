@@ -3,18 +3,19 @@ import { getListeners } from './subscriptions/listeners';
 
 type SubscriptionData = { id: string; name: string };
 
-const node3Subscriptions: SubscriptionData[] = [
-  { id: 'NODE3000001', name: 'pp02 (torr)' },
-  { id: 'NODE3000002', name: 'ppN2 (torr)' },
-  { id: 'NODE3000003', name: 'ppC02 (torr)' },
-  { id: 'NODE3000005', name: 'Urine Tank (%)' },
-  { id: 'NODE3000008', name: 'Waste Water Tank (%)' },
-  { id: 'NODE3000009', name: 'Clean Water Tank (%)' },
-  { id: 'NODE3000011', name: 'O2 Production Rate (lb/day)' },
-  { id: 'NODE3000017', name: 'Coolant Water Quantity (%)' },
+const loopBSubscriptions: SubscriptionData[] = [
+  { id: 'P1000001', name: 'Loop B Pump Flowrate (kg/hr)' },
+  { id: 'P1000002', name: 'Loop B PM Out Press (kPa)' },
+  { id: 'P1000003', name: 'Loop B PM Out Temp (deg C)' },
 ];
 
-export const subscriptions: Subscription[] = node3Subscriptions.map((sub) => {
+const loopASubscriptions: SubscriptionData[] = [
+  { id: 'S1000001', name: 'Loop A Pump Flowrate (kg/hr)' },
+  { id: 'S1000002', name: 'Loop A PM Out Press (kPa)' },
+  { id: 'S1000003', name: 'Loop A PM Out Temp (deg C)' },
+];
+
+export const subscriptions: Subscription[] = loopASubscriptions.map((sub) => {
   const subscription = new Subscription('MERGE', [sub.id], ['Value']);
 
   subscription.addListener(getListeners(sub.name));

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main # Trigger on pushes to main branch
+  workflow_dispatch: # Allow manual triggering
 
 jobs:
   terraform:

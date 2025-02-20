@@ -7,6 +7,10 @@ variable "ssh_public_key" {}
 resource "aws_key_pair" "iss_data_fetcher_key" {
   key_name   = "iss_data_fetcher_key"  # Name of the key pair
   public_key = var.ssh_public_key
+
+    lifecycle {
+    prevent_destroy = false
+  }
 }
 
 resource "aws_instance" "iss_data_fetcher" {

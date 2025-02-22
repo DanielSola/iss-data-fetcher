@@ -18,3 +18,8 @@ module "ec2_instance" {
   instance_type = "t4g.nano"
   key_name      = "manual"
 }
+
+module "kinesis" {
+  source        = "./modules/kinesis"
+  stream_name   = "iss-data-stream"
+}

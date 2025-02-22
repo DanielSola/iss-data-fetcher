@@ -39,8 +39,8 @@ resource "aws_instance" "iss_data_fetcher" {
     #!/bin/bash
     sudo su
     yum -y install git nodejs npm
-    git clone https://github.com/DanielSola/iss-data-fetcher.git /home/ec2-user/iss-data-fetcher
-    cd /home/ec2-user/iss-data-fetcher
+    git clone https://github.com/DanielSola/iss-data-fetcher.git
+    cd ./iss-data-fetcher
     npm i
     npm run start
   EOF

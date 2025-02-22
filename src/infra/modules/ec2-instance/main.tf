@@ -1,7 +1,7 @@
 resource "aws_instance" "iss_data_fetcher" {
   ami           = var.ami
   instance_type = var.instance_type
-  key_name      = var.key_name
+  key_name      = aws_key_pair.iss_data_fetcher_key.key_name
   security_groups = ["default"]
 
   tags = {
@@ -20,8 +20,4 @@ resource "aws_instance" "iss_data_fetcher" {
   lifecycle {
     create_before_destroy = true
   }
-}
-
-output "instance_ip" {
-  value = aws_instance.iss_data_fetcher.public_ip
 }

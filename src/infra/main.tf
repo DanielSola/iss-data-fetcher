@@ -12,44 +12,27 @@ provider "aws" {
   region = "eu-west-1"  # Change to your preferred AWS region
 }
 
-variable "ssh_public_key" {}
+resource "tls_private_key" "iss_ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
 
 resource "aws_key_pair" "iss_data_fetcher_key" {
   key_name   = "iss_data_fetcher_key"  # Name of the key pair
-  public_key = var.ssh_public_key
+  public_key = tls_private_key.iss_ssh_key.public_key_openssh
 
   lifecycle {
     prevent_destroy = false
   }
 }
 
-resource "aws_instance" "iss_data_fetcher" {
+module "ec2_instance" {
+  source        = "./modules/ec2-instance"
   ami           = "ami-0fc389ea796968582"
   instance_type = "t4g.nano"
-
-  tags = {
-    Name = "iss-data-fetcher"
-  }
-
-  // key_name        = aws_key_pair.iss_data_fetcher_key.key_name  # Use the created key pair
-  key_name = "manual"
-  security_groups = ["default"]  # Adjust security groups as needed
-
-  user_data = <<-EOF
-    #!/bin/bash
-    yum -y install git nodejs npm
-    git clone https://github.com/DanielSola/iss-data-fetcher.git /home/ec2-user/iss-data-fetcher
-    cd /home/ec2-user/iss-data-fetcher
-    npm i
-    npm run start > /home/ec2-user/iss-data-fetcher/app.log 2>&1 &
-  EOF
-
-
-  lifecycle {
-    create_before_destroy = true  # Ensures the old instance is destroyed before creating a new one
-  }
+  key_name      = "manual"
 }
 
 output "instance_ip" {
-  value = aws_instance.iss_data_fetcher.public_ip
+  value = module.ec2_instance.instance_ip
 }

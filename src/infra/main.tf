@@ -18,14 +18,14 @@ resource "aws_key_pair" "iss_data_fetcher_key" {
   key_name   = "iss_data_fetcher_key"  # Name of the key pair
   public_key = var.ssh_public_key
 
-    lifecycle {
+  lifecycle {
     prevent_destroy = false
   }
 }
 
 resource "aws_instance" "iss_data_fetcher" {
-  ami           = "ami-0e063207e92b63437"
-  instance_type = "t3.nano"
+  ami           = "ami-0fc389ea796968582"
+  instance_type = "t4g.nano"
 
   tags = {
     Name = "iss-data-fetcher"

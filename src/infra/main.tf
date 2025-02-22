@@ -31,7 +31,8 @@ resource "aws_instance" "iss_data_fetcher" {
     Name = "iss-data-fetcher"
   }
 
-  key_name        = aws_key_pair.iss_data_fetcher_key.key_name  # Use the created key pair
+  // key_name        = aws_key_pair.iss_data_fetcher_key.key_name  # Use the created key pair
+  key_name = "manual"
   security_groups = ["default"]  # Adjust security groups as needed
 
   lifecycle {

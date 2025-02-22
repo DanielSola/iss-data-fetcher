@@ -35,6 +35,16 @@ resource "aws_instance" "iss_data_fetcher" {
   key_name = "manual"
   security_groups = ["default"]  # Adjust security groups as needed
 
+  user_data = <<-EOF
+    #!/bin/bash
+    sudo su
+    yum -y install git nodejs npm
+    git clone https://github.com/DanielSola/iss-data-fetcher.git /home/ec2-user/iss-data-fetcher
+    cd /home/ec2-user/iss-data-fetcher
+    npm i
+    npm run start
+  EOF
+
   lifecycle {
     create_before_destroy = true  # Ensures the old instance is destroyed before creating a new one
   }

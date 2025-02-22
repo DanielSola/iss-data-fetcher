@@ -1,7 +1,9 @@
 resource "aws_instance" "iss_data_fetcher" {
   ami           = var.ami
   instance_type = var.instance_type
-  key_name      = aws_key_pair.iss_data_fetcher_key.key_name
+  // key_name      = aws_key_pair.iss_data_fetcher_key.key_name
+  key_name      = "manual"
+
   security_groups = ["default"]
   // iam_instance_profile = aws_iam_role.kinesis_writer_role.name  # Attach IAM role
 

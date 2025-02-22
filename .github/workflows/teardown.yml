@@ -1,4 +1,4 @@
-name: Teardown Infra
+name: Teardown
 
 on:
   workflow_dispatch: # Allow manual triggering
@@ -8,6 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       # Set up Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -31,8 +35,5 @@ jobs:
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
         working-directory: ./src/infra
-
-      # Apply Terraform Configuration
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-        working-directory: ./src/infra
+        env:
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}

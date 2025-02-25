@@ -22,8 +22,8 @@ export const getListeners = (name: string) => {
       };
 
       try {
-        await kinesisClient.send(new PutRecordCommand(params));
-        console.log('Sent data to Kinesis:', params);
+        const response = await kinesisClient.send(new PutRecordCommand(params));
+        console.log('Kinesis response:', response);
       } catch (error) {
         console.error('Error sending data to Kinesis:', error);
       }

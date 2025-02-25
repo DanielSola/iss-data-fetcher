@@ -12,14 +12,15 @@ provider "aws" {
   region = "eu-west-1"  # Change to your preferred AWS region
 }
 
+module "kinesis" {
+  source        = "./modules/kinesis"
+  stream_name   = "iss-data-stream"
+}
+
 module "ec2_instance" {
   source        = "./modules/ec2-instance"
   ami           = "ami-0fc389ea796968582"
   instance_type = "t4g.nano"
   key_name      = "manual"
-}
-
-module "kinesis" {
-  source        = "./modules/kinesis"
-  stream_name   = "iss-data-stream"
+  iam_instance_profile = module.kinesis.ec2_instance_profile_name
 }

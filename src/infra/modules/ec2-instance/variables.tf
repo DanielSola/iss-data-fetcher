@@ -1,14 +1,19 @@
 variable "ami" {
-  description = "The AMI ID for the EC2 instance"
+  description = "The AMI to use for the instance"
   type        = string
 }
 
 variable "instance_type" {
-  description = "EC2 instance type"
+  description = "The type of instance to start"
   type        = string
 }
 
 variable "key_name" {
-  description = "SSH key name"
+  description = "The key name to use for the instance"
+  type        = string
+}
+
+variable "iam_instance_profile" {
+  description = "The IAM instance profile to attach to the instance"
   type        = string
 }

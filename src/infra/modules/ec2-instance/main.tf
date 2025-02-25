@@ -5,7 +5,7 @@ resource "aws_instance" "iss_data_fetcher" {
   key_name      = "manual"
 
   security_groups = ["default"]
-  // iam_instance_profile = aws_iam_role.kinesis_writer_role.name  # Attach IAM role
+  iam_instance_profile = var.iam_instance_profile
 
   tags = {
     Name = "iss-data-fetcher"

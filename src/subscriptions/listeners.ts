@@ -16,8 +16,8 @@ export const getListeners = (name: string) => {
       console.log(`${new Date().toISOString()}: UPDATE FOR ${name}`, value);
 
       const params: PutRecordCommandInput = {
-        StreamName: 'iss_data_stream', // Your Kinesis stream name
-        PartitionKey: name, // Use a unique identifier for partitioning
+        StreamName: 'iss-data-stream',
+        PartitionKey: name,
         Data: Buffer.from(JSON.stringify({ name, value, timestamp: new Date().toISOString() })),
       };
 

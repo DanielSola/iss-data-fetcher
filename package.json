@@ -11,9 +11,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@aws-sdk/client-kinesis": "^3.750.0",
     "lightstreamer-client-node": "^9.2.2"
   },
   "devDependencies": {
+    "@types/node": "^22.13.5",
     "typescript": "^5.7.3"
   }
 }

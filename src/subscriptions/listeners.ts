@@ -1,7 +1,7 @@
 import { ItemUpdate } from 'lightstreamer-client-node';
 import { KinesisClient, PutRecordCommand, PutRecordCommandInput } from '@aws-sdk/client-kinesis';
 
-const kinesisClient = new KinesisClient(); // Change to your AWS region
+const kinesisClient = new KinesisClient({ region: 'eu-west-1' }); // Change to your AWS region
 
 export const getListeners = (name: string) => {
   return {

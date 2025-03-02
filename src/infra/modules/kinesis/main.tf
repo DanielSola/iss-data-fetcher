@@ -1,10 +1,11 @@
 resource "aws_kinesis_stream" "iss_data_stream" {
   name        = var.stream_name
+  shard_count = 1
 
-  retention_period = 24 # Data retention in hours (default is 24, max is 168)
+  retention_period = 24
 
   stream_mode_details {
-    stream_mode = "ON_DEMAND"  # Choose "PROVISIONED" if you want manual scaling
+    stream_mode = "PROVISIONED"
   }
 
   tags = {

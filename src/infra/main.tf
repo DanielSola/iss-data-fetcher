@@ -24,3 +24,20 @@ module "ec2_instance" {
   key_name      = "manual"
   iam_instance_profile = module.kinesis.ec2_instance_profile_name
 }
+
+module "data_bucket" {
+  source = "./modules/data-bucket"
+}
+
+module "firehose" {
+  source        = "./modules/firehose"
+  input_kinesis_stream_arn = module.kinesis.stream_arn
+  input_kinesis_stream_name = module.kinesis.stream_name
+  destination_bucket_name = module.data_bucket.name
+  destination_bucket_arn = module.data_bucket.arn
+}
+
+module "glue" {
+  source        = "./modules/glue"
+  bucket_name    = module.data_bucket.name
+}

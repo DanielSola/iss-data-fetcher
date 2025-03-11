@@ -40,4 +40,5 @@ module "firehose" {
 module "glue" {
   source        = "./modules/glue"
   bucket_name    = module.data_bucket.name
+  script_path =      "glue/scripts/glue_script.py"
 }

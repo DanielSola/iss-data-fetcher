@@ -45,7 +45,8 @@ resource "aws_iam_policy" "s3_read_policy" {
         Effect   = "Allow"
         Action   = [
           "s3:GetObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:PutObject"
         ]
         Resource = [
           "arn:aws:s3:::iss-historical-data",

@@ -24,7 +24,7 @@ source airflow-venv/bin/activate
 
 # Install Apache Airflow with the specified version
 pip install "apache-airflow==2.10.5" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.8.txt"
-pip install apache-airflow-providers-amazon
+pip install apache-airflow-providers-amazon pandas
 
 # Initialize the Airflow database
 airflow db init
@@ -32,7 +32,7 @@ airflow db init
 # Create an admin user for Airflow
 airflow users create \
     --username admin \
-    --password admin \
+    --password admin21 \
     --firstname FirstName \
     --lastname LastName \
     --email user@example.com \
@@ -47,6 +47,8 @@ sudo ./aws/install
 mkdir -p /home/ubuntu/airflow/dags
 aws s3 sync s3://airflow-iss-anomaly-detector/airflow/dag/ /home/ubuntu/airflow/dags/
 export AIRFLOW__CORE__DAGS_FOLDER=/home/ubuntu/airflow/dags
+export AIRFLOW__CORE__LOAD_EXAMPLES=False
+export AWS_REGION=eu-west-1
 
 # Start the Airflow webserver and scheduler as background processes
 nohup airflow webserver --port 8080 &

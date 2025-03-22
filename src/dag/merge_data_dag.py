@@ -67,7 +67,7 @@ with DAG(
     description="Extract, transform, and load data from S3",
     schedule_interval=timedelta(minutes=10),
     catchup=False,
-    is_paused_upon_creation=False
+    is_paused_upon_creation=True
 ) as dag:
     
     task_extract = PythonOperator(

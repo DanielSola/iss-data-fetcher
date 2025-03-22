@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.amazon.aws.operators.sagemaker import SageMakerTrainingOperator
+from airflow.providers.amazon.aws.operators.sagemaker import SageMakerTrainingOperator, SageMakerModelOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from datetime import datetime, timedelta
@@ -24,10 +24,18 @@ S3_OUTPUT_PATH = "s3://iss-historical-data/data/"
 os.environ['AWS_DEFAULT_REGION'] = 'eu-west-1'
 
 
-def generate_job_names(**kwargs):
-    """Generate unique SageMaker job names and push to XCom."""
-    job_name = f"TRAINING-JOB-{uuid.uuid4().hex[:5]}"
-    kwargs['ti'].xcom_push(key="JOB_NAME", value=job_name)
+def generate_job_names(**context):
+    job_name = f"TRAINING-JOB-{str(uuid.uuid4())[0:5]}"
+    model_name = f"random-cut-forest-model-{str(uuid.uuid4())[0:5]}"
+    endpoint_config_name = f"rcf-endpoint-config-{str(uuid.uuid4())[0:5]}"
+    
+    context['ti'].xcom_push(key="JOB_NAME", value=job_name)
+    context['ti'].xcom_push(key="MODEL_NAME", value=model_name)
+    context['ti'].xcom_push(key="ENDPOINT_CONFIG_NAME", value=endpoint_config_name)
+
+    print(f"Generated JOB_NAME: {job_name}")
+    print(f"Generated MODEL_NAME: {model_name}")
+    print(f"Generated ENDPOINT_CONFIG_NAME: {endpoint_config_name}")
 
 
 def get_training_config(**kwargs):
@@ -80,6 +88,20 @@ def get_training_config(**kwargs):
         "EnableInterContainerTrafficEncryption": False,
     }
 
+def get_model_config(**context):
+    model_name = context["ti"].xcom_pull(task_ids="generate_job_names", key="MODEL_NAME")
+    job_name = context["ti"].xcom_pull(task_ids="generate_job_names", key="JOB_NAME")
+    
+    model_config = {
+        "ModelName": model_name,
+        "PrimaryContainer": {
+            "Image": TRAINING_IMAGE_URI,
+            "ModelDataUrl": f"s3://iss-historical-data/data/{job_name}/output/model.tar.gz",
+        },
+        "ExecutionRoleArn": SAGEMAKER_ROLE_ARN,
+    }
+    
+    context["ti"].xcom_push(key="model_config", value=model_config)
 
 def get_model_key(**kwargs):
     """Retrieve job name from XCom and construct S3 model path."""
@@ -126,6 +148,12 @@ with DAG(
         provide_context=True,
     )
 
+    generate_model_config_task = PythonOperator(
+        task_id="generate_model_config",
+        python_callable=get_model_config,
+        provide_context=True,
+    )
+
     wait_for_model = S3KeySensor(
         task_id="wait_for_model",
         bucket_name="iss-historical-data",
@@ -135,5 +163,53 @@ with DAG(
         timeout=600,
     )
 
+    register_model = SageMakerModelOperator(
+        task_id="register_model",
+        config="{{ ti.xcom_pull(task_ids='generate_model_config', key='model_config') }}",
+        aws_conn_id="aws_default",
+    )
+
+    """
+   # Step 4: Create a New Endpoint Configuration
+    create_endpoint_config = SageMakerEndpointConfigOperator(
+        task_id="create_endpoint_config",
+        config={
+            "EndpointConfigName": ENDPOINT_CONFIG_NAME,
+            "ProductionVariants": [
+                {
+                    "VariantName": "AllTraffic",
+                    "ModelName": MODEL_NAME,
+                    "InitialInstanceCount": 1,
+                    "InstanceType": "ml.m4.xlarge",
+                }
+            ],
+        },
+        aws_conn_id="aws_default",
+    )
+
+    # Step 5: Delete Existing Endpoint (if it exists)
+    def delete_existing_endpoint():
+        hook = SageMakerHook(aws_conn_id="aws_default")
+        existing_endpoints = hook.list_endpoints()
+        if ENDPOINT_NAME in existing_endpoints:
+            print(f"Deleting existing endpoint: {ENDPOINT_NAME}")
+            hook.delete_endpoint(endpoint_name=ENDPOINT_NAME)
+
+    delete_endpoint_if_exists = PythonOperator(
+        task_id="delete_old_endpoint",
+        python_callable=delete_existing_endpoint,
+    )
+
+    # Step 6: Deploy the Model
+    deploy_model = SageMakerEndpointOperator(
+        task_id="deploy_model",
+        config={
+            "EndpointName": ENDPOINT_NAME,
+            "EndpointConfigName": ENDPOINT_CONFIG_NAME,
+        },
+        aws_conn_id="aws_default",
+    )
+    
+    """
     # Define task dependencies
-    generate_job_names_task >> generate_training_config_task >> task_train_model >> generate_model_key_task >> wait_for_model
+    generate_job_names_task >> generate_training_config_task >> task_train_model >> generate_model_key_task >> wait_for_model >> generate_model_config_task >> register_model

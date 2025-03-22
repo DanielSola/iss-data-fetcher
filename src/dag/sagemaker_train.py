@@ -3,6 +3,7 @@ from airflow.providers.amazon.aws.operators.sagemaker import SageMakerTrainingOp
 from datetime import datetime, timedelta
 import os
 import uuid
+from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 
 # DAG default arguments
 default_args = {
@@ -17,23 +18,17 @@ SAGEMAKER_ROLE_ARN = "arn:aws:iam::730335312484:role/service-role/AmazonSageMake
 TRAINING_IMAGE_URI = "438346466558.dkr.ecr.eu-west-1.amazonaws.com/randomcutforest:1"
 S3_TRAINING_DATA = "s3://iss-historical-data/data/loop_A_flowrate.csv"
 S3_OUTPUT_PATH = "s3://iss-historical-data/data/"
-JOB_NAME = f"TRAINING-JOB-{str(uuid.uuid4())[0:5]}"
+
 # Set region
 os.environ['AWS_DEFAULT_REGION'] = 'eu-west-1'
 
+def get_training_config(**context):
 
-# Define DAG
-with DAG(
-    "sagemaker_training",
-    default_args=default_args,
-    description="Run a SageMaker training job with DAG run ID",
-    schedule_interval=None,  # Can be triggered manually or from another DAG
-    catchup=False,
-) as dag:
-    
-    task_train_model = SageMakerTrainingOperator(
-        task_id="train_sagemaker_model",
-        config={
+    JOB_NAME = f"TRAINING-JOB-{str(uuid.uuid4())[0:5]}"
+
+    context['ti'].xcom_push(key='JOB_NAME', value=JOB_NAME)
+
+    return {
             "TrainingJobName": JOB_NAME,  # DAG Run ID as part of the job name
             "AlgorithmSpecification": {
                 "TrainingImage": TRAINING_IMAGE_URI,
@@ -71,7 +66,39 @@ with DAG(
             "EnableManagedSpotTraining": False,
             "EnableNetworkIsolation": False,
             "EnableInterContainerTrafficEncryption": False,
-        },
+        }
+
+
+def get_model_key(**context):
+    model = context['ti'].xcom_pull(key='JOB_NAME')[0]
+
+    return f'data/{model}/output/model.tar.gz'
+
+
+# Define DAG
+with DAG(
+    "sagemaker_training",
+    default_args=default_args,
+    description="Run a SageMaker training job with DAG run ID",
+    schedule_interval=None,  # Can be triggered manually or from another DAG
+    catchup=False,
+) as dag:
+    
+    task_train_model = SageMakerTrainingOperator(
+        task_id="train_sagemaker_model",
+        config=get_training_config(),
         aws_conn_id="aws_default",
         wait_for_completion=True,
     )
+
+  # Step 2: Wait for Model File in S3
+    wait_for_model = S3KeySensor(
+        task_id="wait_for_model",
+        bucket_name="iss-historical-data",
+        bucket_key=get_model_key(),
+        aws_conn_id="aws_default",
+        poke_interval=15,  # Check every 60 seconds
+        timeout=600,  # Wait up to 10 mins
+    )
+
+    task_train_model >> wait_for_model

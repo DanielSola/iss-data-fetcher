@@ -1,6 +1,6 @@
 locals {
-    sagemaker_train_dag_path = "${path.root}/../sagemaker_train.py"
-    merge_data_dag_path = "${path.root}/../merge_data_dag.py"
+    sagemaker_train_dag_path = "${path.root}/../dag/sagemaker_train.py"
+    merge_data_dag_path = "${path.root}/../dag/merge_data_dag.py"
 }
 
 variable "ami" {

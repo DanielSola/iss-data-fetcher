@@ -1,5 +1,5 @@
 from airflow import DAG
-from airflow.providers.amazon.aws.operators.sagemaker import SageMakerTrainingOperator, SageMakerModelOperator
+from airflow.providers.amazon.aws.operators.sagemaker import SageMakerTrainingOperator, SageMakerModelOperator, SageMakerEndpointConfigOperator, SageMakerEndpointOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from datetime import datetime, timedelta
@@ -28,10 +28,12 @@ def generate_job_names(**context):
     job_name = f"TRAINING-JOB-{str(uuid.uuid4())[0:5]}"
     model_name = f"random-cut-forest-model-{str(uuid.uuid4())[0:5]}"
     endpoint_config_name = f"rcf-endpoint-config-{str(uuid.uuid4())[0:5]}"
-    
+    endpoint_name = f"rcf-endpoint-{str(uuid.uuid4())[0:5]}"
+
     context['ti'].xcom_push(key="JOB_NAME", value=job_name)
     context['ti'].xcom_push(key="MODEL_NAME", value=model_name)
     context['ti'].xcom_push(key="ENDPOINT_CONFIG_NAME", value=endpoint_config_name)
+    context['ti'].xcom_push(key="ENDPOINT_NAME", value=endpoint_name)
 
     print(f"Generated JOB_NAME: {job_name}")
     print(f"Generated MODEL_NAME: {model_name}")
@@ -169,16 +171,15 @@ with DAG(
         aws_conn_id="aws_default",
     )
 
-    """
    # Step 4: Create a New Endpoint Configuration
     create_endpoint_config = SageMakerEndpointConfigOperator(
         task_id="create_endpoint_config",
         config={
-            "EndpointConfigName": ENDPOINT_CONFIG_NAME,
+            "EndpointConfigName": "{{ ti.xcom_pull(task_ids='generate_job_names', key='ENDPOINT_CONFIG_NAME') }}",
             "ProductionVariants": [
                 {
                     "VariantName": "AllTraffic",
-                    "ModelName": MODEL_NAME,
+                    "ModelName": "{{ ti.xcom_pull(task_ids='generate_job_names', key='MODEL_NAME') }}",
                     "InitialInstanceCount": 1,
                     "InstanceType": "ml.m4.xlarge",
                 }
@@ -187,6 +188,7 @@ with DAG(
         aws_conn_id="aws_default",
     )
 
+    """
     # Step 5: Delete Existing Endpoint (if it exists)
     def delete_existing_endpoint():
         hook = SageMakerHook(aws_conn_id="aws_default")
@@ -200,16 +202,17 @@ with DAG(
         python_callable=delete_existing_endpoint,
     )
 
+    """
+
     # Step 6: Deploy the Model
     deploy_model = SageMakerEndpointOperator(
         task_id="deploy_model",
         config={
-            "EndpointName": ENDPOINT_NAME,
-            "EndpointConfigName": ENDPOINT_CONFIG_NAME,
+            "EndpointName":  "{{ ti.xcom_pull(task_ids='generate_job_names', key='ENDPOINT_NAME') }}",
+            "EndpointConfigName": "{{ ti.xcom_pull(task_ids='generate_job_names', key='ENDPOINT_CONFIG_NAME') }}",
         },
         aws_conn_id="aws_default",
     )
     
-    """
     # Define task dependencies
-    generate_job_names_task >> generate_training_config_task >> task_train_model >> generate_model_key_task >> wait_for_model >> generate_model_config_task >> register_model
+    generate_job_names_task >> generate_training_config_task >> task_train_model >> generate_model_key_task >> wait_for_model >> generate_model_config_task >> register_model >> create_endpoint_config >> deploy_model

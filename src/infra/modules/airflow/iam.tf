@@ -55,7 +55,13 @@ resource "aws_iam_policy" "airflow_sagemaker_policy" {
           "sagemaker:CreateTrainingJob",
           "sagemaker:DescribeTrainingJob",
           "sagemaker:StopTrainingJob",
-          "sagemaker:ListTrainingJobs"
+          "sagemaker:ListTrainingJobs",
+          "sagemaker:CreateModel",
+          "sagemaker:CreateEndpoint",
+          "sagemaker:CreateEndpointConfig",
+          "sagemaker:DescribeModel",
+          "sagemaker:DescribeEndpointConfig",
+          "sagemaker:DescribeEndpoint"
         ]
         Resource = "*"
       },

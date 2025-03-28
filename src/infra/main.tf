@@ -37,12 +37,6 @@ module "firehose" {
   destination_bucket_arn = module.data_bucket.arn
 }
 
-module "glue" {
-  source        = "./modules/glue"
-  bucket_name    = module.data_bucket.name
-  script_path =      "glue/scripts/glue_script.py"
-}
-
 module "airflow" {
   source        = "./modules/airflow"
   ami           = "ami-03fd334507439f4d1"

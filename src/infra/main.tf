@@ -42,3 +42,26 @@ module "airflow" {
   ami           = "ami-03fd334507439f4d1"
   instance_type = "t2.small"
 }
+
+module "iam" {
+  source = "./modules/iam"
+}
+
+module "iss_telemetry_analyzer_lambda" {
+  source = "./modules/iss-telemetry-analyzer-lambda"
+
+  region = "eu-west-1"
+  github_owner = "DanielSola"
+  #release_tag   = "latest"
+  timeout = 300
+  memory_size = 128
+  
+  #environment_variables = {
+  #  ENV = "production"
+  #}
+  
+  #tags = {
+   # Project = "ISS Telemetry"
+   # Environment = "Production"
+  #}
+}

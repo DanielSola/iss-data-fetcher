@@ -53,3 +53,31 @@ resource "aws_lambda_permission" "apigw_invoke_lambda" {
   principal     = "apigateway.amazonaws.com"
   source_arn = "${aws_apigatewayv2_api.websocket_api.execution_arn}/*/*"
 }
+
+
+# Allow lambda to read kinesis stream
+resource "aws_iam_policy" "lambda_kinesis_policy" {
+  name        = "LambdaKinesisReadPolicy"
+  description = "Allows Lambda to read from Kinesis Stream"
+  
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "kinesis:GetRecords",
+          "kinesis:GetShardIterator",
+          "kinesis:DescribeStream",
+          "kinesis:ListStreams"
+        ]
+        Resource = var.kinesis_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_kinesis_attach" {
+  policy_arn = aws_iam_policy.lambda_kinesis_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}

@@ -55,13 +55,5 @@ module "iss_telemetry_analyzer_lambda" {
   #release_tag   = "latest"
   timeout = 300
   memory_size = 128
-  
-  #environment_variables = {
-  #  ENV = "production"
-  #}
-  
-  #tags = {
-   # Project = "ISS Telemetry"
-   # Environment = "Production"
-  #}
+  kinesis_arn = module.kinesis.stream_arn
 }

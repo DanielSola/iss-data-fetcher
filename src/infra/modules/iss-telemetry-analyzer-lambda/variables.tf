@@ -20,3 +20,8 @@ variable "memory_size" {
   type        = number
   default     = 128
 }
+
+variable "kinesis_arn" {
+  description = "ARN of the Kinesis stream"
+  type        = string
+}

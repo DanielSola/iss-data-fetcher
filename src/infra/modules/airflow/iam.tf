@@ -58,6 +58,7 @@ resource "aws_iam_policy" "airflow_sagemaker_policy" {
           "sagemaker:ListTrainingJobs",
           "sagemaker:CreateModel",
           "sagemaker:CreateEndpoint",
+          "sagemaker:UpdateEndpoint",
           "sagemaker:CreateEndpointConfig",
           "sagemaker:DescribeModel",
           "sagemaker:DescribeEndpointConfig",

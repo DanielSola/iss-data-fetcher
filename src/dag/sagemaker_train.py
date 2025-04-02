@@ -5,6 +5,8 @@ from airflow.providers.amazon.aws.sensors.s3 import S3KeySensor
 from datetime import datetime, timedelta
 import os
 import uuid
+import boto3
+from botocore.exceptions import ClientError
 
 # DAG default arguments
 default_args = {
@@ -19,26 +21,22 @@ SAGEMAKER_ROLE_ARN = "arn:aws:iam::730335312484:role/service-role/AmazonSageMake
 TRAINING_IMAGE_URI = "438346466558.dkr.ecr.eu-west-1.amazonaws.com/randomcutforest:1"
 S3_TRAINING_DATA = "s3://iss-historical-data/data/loop_A_flowrate.csv"
 S3_OUTPUT_PATH = "s3://iss-historical-data/data/"
+ENDPOINT_NAME = "rcf-anomaly-predictor-endpoint"
 
 # Set region
 os.environ['AWS_DEFAULT_REGION'] = 'eu-west-1'
-
 
 def generate_job_names(**context):
     job_name = f"TRAINING-JOB-{str(uuid.uuid4())[0:5]}"
     model_name = f"random-cut-forest-model-{str(uuid.uuid4())[0:5]}"
     endpoint_config_name = f"rcf-endpoint-config-{str(uuid.uuid4())[0:5]}"
-    endpoint_name = f"rcf-endpoint-{str(uuid.uuid4())[0:5]}"
-
     context['ti'].xcom_push(key="JOB_NAME", value=job_name)
     context['ti'].xcom_push(key="MODEL_NAME", value=model_name)
     context['ti'].xcom_push(key="ENDPOINT_CONFIG_NAME", value=endpoint_config_name)
-    context['ti'].xcom_push(key="ENDPOINT_NAME", value=endpoint_name)
 
     print(f"Generated JOB_NAME: {job_name}")
     print(f"Generated MODEL_NAME: {model_name}")
     print(f"Generated ENDPOINT_CONFIG_NAME: {endpoint_config_name}")
-
 
 def get_training_config(**kwargs):
     """Retrieve the training job name from XCom and build the SageMaker config."""
@@ -114,6 +112,37 @@ def get_model_key(**kwargs):
 
     return f"data/{job_name}/output/model.tar.gz"
 
+def create_or_update_endpoint(endpoint_name, new_endpoint_config_name):
+    sm_client = boto3.client("sagemaker", region_name="eu-west-1")
+
+    try:
+        # Check if the endpoint exists
+        response = sm_client.describe_endpoint(EndpointName=endpoint_name)
+        print(f"Endpoint {endpoint_name} exists with status {response['EndpointStatus']}. Updating...")
+
+        # If the endpoint exists, update it
+        update_response = sm_client.update_endpoint(
+            EndpointName=endpoint_name,
+            EndpointConfigName=new_endpoint_config_name,
+        )
+        print(f"Endpoint update response: {update_response}")
+        
+    except ClientError as e:
+ 
+        endpoint_not_found = e.response['Error']['Message'].startswith('Could not find endpoint')
+
+        if endpoint_not_found:
+            print(f"Endpoint {endpoint_name} does not exist. Creating new endpoint...")
+
+            create_response = sm_client.create_endpoint(
+                EndpointName=endpoint_name,
+                EndpointConfigName=new_endpoint_config_name,
+            )
+            print(f"Endpoint creation response: {create_response}")
+        else:
+            # Raise error if it's another issue
+            print(f"Error: {str(e)}")
+            raise
 
 # Define DAG
 with DAG(
@@ -171,7 +200,7 @@ with DAG(
         aws_conn_id="aws_default",
     )
 
-   # Step 4: Create a New Endpoint Configuration
+    # Create new endpoint configuration
     create_endpoint_config = SageMakerEndpointConfigOperator(
         task_id="create_endpoint_config",
         config={
@@ -188,31 +217,12 @@ with DAG(
         aws_conn_id="aws_default",
     )
 
-    """
-    # Step 5: Delete Existing Endpoint (if it exists)
-    def delete_existing_endpoint():
-        hook = SageMakerHook(aws_conn_id="aws_default")
-        existing_endpoints = hook.list_endpoints()
-        if ENDPOINT_NAME in existing_endpoints:
-            print(f"Deleting existing endpoint: {ENDPOINT_NAME}")
-            hook.delete_endpoint(endpoint_name=ENDPOINT_NAME)
-
-    delete_endpoint_if_exists = PythonOperator(
-        task_id="delete_old_endpoint",
-        python_callable=delete_existing_endpoint,
-    )
-
-    """
-
-    # Step 6: Deploy the Model
-    deploy_model = SageMakerEndpointOperator(
-        task_id="deploy_model",
-        config={
-            "EndpointName":  "{{ ti.xcom_pull(task_ids='generate_job_names', key='ENDPOINT_NAME') }}",
-            "EndpointConfigName": "{{ ti.xcom_pull(task_ids='generate_job_names', key='ENDPOINT_CONFIG_NAME') }}",
-        },
-        aws_conn_id="aws_default",
+    # Task to create or update the endpoint
+    create_or_update_endpoint_task = PythonOperator(
+        task_id="create_or_update_endpoint",
+        python_callable=create_or_update_endpoint,
+        provide_context=True,
     )
     
     # Define task dependencies
-    generate_job_names_task >> generate_training_config_task >> task_train_model >> generate_model_key_task >> wait_for_model >> generate_model_config_task >> register_model >> create_endpoint_config >> deploy_model
+    generate_job_names_task >> generate_training_config_task >> task_train_model >> generate_model_key_task >> wait_for_model >> generate_model_config_task >> register_model >> create_endpoint_config >> create_or_update_endpoint_task

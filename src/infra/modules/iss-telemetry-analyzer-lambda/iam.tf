@@ -33,7 +33,7 @@ resource "aws_iam_policy" "lambda_websocket_management" {
     {
       "Effect": "Allow",
       "Action": "execute-api:ManageConnections",
-      "Resource": "arn:aws:execute-api:eu-west-1:730335312484:d0loutlbuc/prod/POST/@connections/*"
+      "Resource": "arn:aws:execute-api:eu-west-1:730335312484:*/prod/POST/@connections/*"
     }
   ]
 }
@@ -80,4 +80,32 @@ resource "aws_iam_policy" "lambda_kinesis_policy" {
 resource "aws_iam_role_policy_attachment" "lambda_kinesis_attach" {
   policy_arn = aws_iam_policy.lambda_kinesis_policy.arn
   role       = aws_iam_role.lambda_role.name
+}
+
+
+# Access websocket connections table in DynamoDB
+resource "aws_iam_policy" "websocket_dynamodb_policy" {
+  name        = "WebSocketDynamoDBPolicy"
+  description = "Policy to allow Lambda to manage WebSocket connections in DynamoDB"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:Scan",
+          "dynamodb:DeleteItem"
+        ]
+        Resource = aws_dynamodb_table.websocket_connections.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "websocket_lambda_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.websocket_dynamodb_policy.arn
 }

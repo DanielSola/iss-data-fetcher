@@ -8,6 +8,11 @@ resource "aws_lambda_function" "iss_telemetry_analyzer" {
   source_code_hash = aws_s3_object.lambda_package.etag
   timeout     = var.timeout
   memory_size = var.memory_size
+  environment {
+    variables = {
+      API_GATEWAY_URL = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.eu-west-1.amazonaws.com/prod"
+    }
+  }
 
   depends_on = [aws_s3_object.lambda_package]
 }

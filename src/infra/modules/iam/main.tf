@@ -119,3 +119,27 @@ resource "aws_iam_policy" "handle_tf_state" {
     ]
   })
 }
+
+resource "aws_iam_policy" "handle_websocket_connections_table" {
+  name        = "handle_websocket_connections_table"
+  description = "Policy handling websocket connection table"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+				"dynamoDB:CreateTable",
+				"dynamoDB:DeleteTable",
+        "dynamoDB:TagResource",
+        "dynamoDB:DescribeTable",
+        "dynamoDB:DescribeContinuousBackups",
+        "dynamodb:DescribeTimeToLive",
+        "dynamodb:ListTagsOfResource"
+        ],
+ 			"Resource": "arn:aws:dynamodb:eu-west-1:730335312484:table/WebSocketConnections"
+    }
+    ]
+  })
+}

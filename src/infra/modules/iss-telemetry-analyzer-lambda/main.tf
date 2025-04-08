@@ -5,23 +5,17 @@ resource "aws_lambda_function" "iss_telemetry_analyzer" {
   handler       = "bootstrap"
   runtime       = "provided.al2023"
   role          = aws_iam_role.lambda_role.arn
-  source_code_hash = aws_s3_object.lambda_package.etag
+ # source_code_hash = aws_s3_object.lambda_package.etag
   timeout     = var.timeout
   memory_size = var.memory_size
   environment {
     variables = {
       API_GATEWAY_URL = "https://${aws_apigatewayv2_api.websocket_api.id}.execute-api.eu-west-1.amazonaws.com/prod"
+      SAGEMAKER_ENDPOINT_NAME = "rcf-anomaly-predictor-endpoint"
+
     }
   }
-
-  depends_on = [aws_s3_object.lambda_package]
 }
-
-
-#data "aws_s3_object" "lambda_package" {
- # bucket = "iss-telemetry-analyzer-lambda"
- # key    = "iss-telemetry-analyzer.zip"
-#}
 
 # Create WebSocket API
 resource "aws_apigatewayv2_api" "websocket_api" {

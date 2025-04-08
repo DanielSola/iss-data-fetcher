@@ -4,7 +4,7 @@
 #}
 
 # Upload the zip to S3
-resource "aws_s3_object" "lambda_package" {
-  bucket = "iss-telemetry-analyzer-lambda"
-  key    = "iss-telemetry-analyzer.zip"
-}
+#resource "aws_s3_object" "lambda_package" {
+ # bucket = "iss-telemetry-analyzer-lambda"
+# key    = "iss-telemetry-analyzer.zip"
+# }

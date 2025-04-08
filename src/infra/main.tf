@@ -57,3 +57,9 @@ module "iss_telemetry_analyzer_lambda" {
   memory_size = 128
   kinesis_arn = module.kinesis.stream_arn
 }
+
+module "anomaly_visualization_app" {
+  source = "./modules/anomaly-visualization-app"
+  github_token = "foo"
+  websocket_url = module.iss_telemetry_analyzer_lambda.websocket_url
+}

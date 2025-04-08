@@ -109,3 +109,28 @@ resource "aws_iam_role_policy_attachment" "websocket_lambda_policy_attachment" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = aws_iam_policy.websocket_dynamodb_policy.arn
 }
+
+
+# Access websocket connections table in DynamoDB
+resource "aws_iam_policy" "sagemaker_invoke_policy" {
+  name        = "InvokePredictioEndpointPolicy"
+  description = "Policy to allow Lambda to invoke prediction endpoint"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = [
+          "sagemaker:InvokeEndpoint",
+        ]
+        Resource = "arn:aws:sagemaker:eu-west-1:730335312484:endpoint/rcf-anomaly-predictor-endpoint"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "sagemaker_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.sagemaker_invoke_policy.arn
+}

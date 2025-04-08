@@ -50,7 +50,7 @@ def get_data():
 def process_data():
     data = get_data()
     df = pd.DataFrame(data)
-    loop_A_flowrate_data = df[df["name"] == "Loop A Pump Flowrate (kg/hr)"]
+    loop_A_flowrate_data = df[df["name"] == "FLOWRATE"]
     loop_A_flowrate_data = loop_A_flowrate_data[["value"]]
     loop_A_flowrate_data.to_csv(CSV_FILENAME, index=False, header=False)
 

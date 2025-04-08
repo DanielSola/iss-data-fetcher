@@ -143,3 +143,28 @@ resource "aws_iam_policy" "handle_websocket_connections_table" {
     ]
   })
 }
+
+resource "aws_iam_policy" "deploy_visualization_app" {
+  name        = "deploy_visualization_app"
+  description = "Policy to deploy visualization app"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+				"amplify:CreateApp",
+        "amplify:GetApp",
+        "amplify:DeleteApp",
+        "amplify:CreateApp",
+        "amplify:CreateBranch",
+        "amplify:GetBranch",
+        "amplify:DeleteBranch",
+        "amplify:UpdateApp"
+        ],
+ 			"Resource": "arn:aws:amplify:eu-west-1:730335312484:apps/*"
+    }
+    ]
+  })
+}

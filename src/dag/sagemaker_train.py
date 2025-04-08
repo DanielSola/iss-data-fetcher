@@ -112,8 +112,12 @@ def get_model_key(**kwargs):
 
     return f"data/{job_name}/output/model.tar.gz"
 
-def create_or_update_endpoint(endpoint_name, new_endpoint_config_name):
+def create_or_update_endpoint(**kwargs):
     sm_client = boto3.client("sagemaker", region_name="eu-west-1")
+    endpoint_name = ENDPOINT_NAME
+    
+    ti = kwargs['ti']
+    new_endpoint_config_name = ti.xcom_pull(task_ids='generate_job_names', key='ENDPOINT_CONFIG_NAME')
 
     try:
         # Check if the endpoint exists
